@@ -22,7 +22,7 @@ namespace Cropalicious
         private void InitializeComponent()
         {
             Text = "Add Custom Size";
-            Size = new Size(300, 200);
+            Size = new Size(340, 180);
             StartPosition = FormStartPosition.CenterParent;
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false;
@@ -38,19 +38,19 @@ namespace Cropalicious
             nameTextBox = new TextBox
             {
                 Location = new Point(80, 18),
-                Size = new Size(180, 23)
+                Size = new Size(230, 23)
             };
 
             var widthLabel = new Label
             {
                 Text = "Width:",
-                Location = new Point(20, 60),
+                Location = new Point(20, 55),
                 Size = new Size(50, 20)
             };
 
             widthUpDown = new NumericUpDown
             {
-                Location = new Point(80, 58),
+                Location = new Point(80, 53),
                 Size = new Size(80, 23),
                 Minimum = 100,
                 Maximum = 4000,
@@ -60,13 +60,13 @@ namespace Cropalicious
             var heightLabel = new Label
             {
                 Text = "Height:",
-                Location = new Point(170, 60),
+                Location = new Point(170, 55),
                 Size = new Size(50, 20)
             };
 
             heightUpDown = new NumericUpDown
             {
-                Location = new Point(220, 58),
+                Location = new Point(230, 53),
                 Size = new Size(80, 23),
                 Minimum = 100,
                 Maximum = 4000,
@@ -76,9 +76,8 @@ namespace Cropalicious
             var okButton = new Button
             {
                 Text = "OK",
-                DialogResult = DialogResult.OK,
-                Location = new Point(125, 110),
-                Size = new Size(75, 25)
+                Location = new Point(150, 95),
+                Size = new Size(75, 28)
             };
             okButton.Click += OnOK;
 
@@ -86,8 +85,8 @@ namespace Cropalicious
             {
                 Text = "Cancel",
                 DialogResult = DialogResult.Cancel,
-                Location = new Point(210, 110),
-                Size = new Size(75, 25)
+                Location = new Point(235, 95),
+                Size = new Size(75, 28)
             };
 
             Controls.AddRange(new Control[] {

@@ -179,7 +179,14 @@ namespace Cropalicious
                 var custom = settings.CustomSizes[i];
                 int col = i % 3;
                 int row = i / 3;
-                
+                int index = i;
+
+                var container = new Panel
+                {
+                    Size = new Size(190, 90),
+                    Margin = new Padding(5)
+                };
+
                 var button = new Button
                 {
                     Text = $"{custom.Name}\n{custom.Width}×{custom.Height}",
@@ -188,13 +195,49 @@ namespace Cropalicious
                     ForeColor = Color.White,
                     FlatStyle = FlatStyle.Flat,
                     Size = new Size(180, 80),
-                    Margin = new Padding(5),
+                    Location = new Point(0, 5),
                     Tag = (custom.Width, custom.Height)
                 };
-
                 button.FlatAppearance.BorderSize = 0;
                 button.Click += OnPresetButtonClick;
-                customTable.Controls.Add(button, col, row);
+
+                var deleteButton = new Button
+                {
+                    Text = "×",
+                    Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                    BackColor = Color.FromArgb(180, 50, 50),
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    Size = new Size(24, 24),
+                    Location = new Point(156, 0),
+                    Tag = index
+                };
+                deleteButton.FlatAppearance.BorderSize = 0;
+                deleteButton.Click += OnDeleteCustomClick;
+
+                container.Controls.Add(deleteButton);
+                container.Controls.Add(button);
+                customTable.Controls.Add(container, col, row);
+            }
+        }
+
+        private void OnDeleteCustomClick(object? sender, EventArgs e)
+        {
+            if (sender is Button btn && btn.Tag is int index)
+            {
+                var custom = settings.CustomSizes[index];
+                var result = MessageBox.Show(
+                    $"Delete '{custom.Name}'?",
+                    "Delete Preset",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question);
+
+                if (result == DialogResult.Yes)
+                {
+                    settings.CustomSizes.RemoveAt(index);
+                    settings.Save();
+                    CreateCustomButtons();
+                }
             }
         }
 
@@ -318,7 +361,8 @@ namespace Cropalicious
         private void OnAddCustomClick(object? sender, EventArgs e)
         {
             using var dialog = new CustomSizeDialog();
-            if (dialog.ShowDialog() == DialogResult.OK)
+            dialog.TopMost = TopMost;
+            if (dialog.ShowDialog(this) == DialogResult.OK)
             {
                 var customSize = new CustomSize
                 {
@@ -326,7 +370,7 @@ namespace Cropalicious
                     Height = dialog.CustomHeight,
                     Name = dialog.CustomName
                 };
-                
+
                 settings.CustomSizes.Add(customSize);
                 settings.Save();
                 CreateCustomButtons();

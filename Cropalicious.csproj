@@ -8,13 +8,14 @@
     <Nullable>enable</Nullable>
     <AssemblyTitle>Cropalicious</AssemblyTitle>
     <AssemblyDescription>Lightweight Windows screenshot utility</AssemblyDescription>
-    <AssemblyVersion>1.0.0.0</AssemblyVersion>
-    <FileVersion>1.0.0.0</FileVersion>
-
-    <!-- Publishing configuration -->
+    <AssemblyVersion>1.0.0.1</AssemblyVersion>
+    <FileVersion>1.0.0.1</FileVersion>
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>false</SelfContained>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+    <PublishDir>publish</PublishDir>
   </PropertyGroup>
 
   <ItemGroup>
