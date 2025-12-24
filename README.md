@@ -24,7 +24,7 @@ Grab the latest release from the [Releases](../../releases) page. Just download 
 Requires .NET 9.0 SDK or later.
 
 ```bash
-git clone https://github.com/yourusername/cropalicious.git
+git clone https://github.com/amatiramisu/cropalicious.git
 cd cropalicious/Cropalicious
 dotnet build -c Release
 dotnet run
@@ -39,6 +39,10 @@ dotnet run
 5. Screenshots save to `Pictures\Cropalicious` by default (configurable)
 
 The app runs in the system tray - use the global hotkey (Ctrl+Shift+C) to trigger captures from anywhere.
+
+## Future
+
+- Toggle for screen border snapping
 
 ## Configuration
 
