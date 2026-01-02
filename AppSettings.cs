@@ -6,6 +6,25 @@ using System.Windows.Forms;
 
 namespace Cropalicious
 {
+    public enum SnapMode
+    {
+        CurrentScreen,
+        VirtualScreen,
+        None
+    }
+
+    public enum HotkeyMode
+    {
+        LastPreset,
+        FixedSize
+    }
+
+    public enum AppTheme
+    {
+        Light,
+        Dark
+    }
+
     public class AppSettings
     {
         public Keys HotkeyKey { get; set; } = Keys.C;
@@ -19,6 +38,14 @@ namespace Cropalicious
         public int WindowX { get; set; } = -1;
         public int WindowY { get; set; } = -1;
         public bool StayOnTop { get; set; } = false;
+        public SnapMode SnapMode { get; set; } = SnapMode.CurrentScreen;
+        public bool MinimizeToTray { get; set; } = false;
+        public bool ContinuousCaptureMode { get; set; } = false;
+        public bool ShowNotifications { get; set; } = true;
+        public HotkeyMode HotkeyMode { get; set; } = HotkeyMode.LastPreset;
+        public int FixedCaptureWidth { get; set; } = 1024;
+        public int FixedCaptureHeight { get; set; } = 1024;
+        public AppTheme Theme { get; set; } = AppTheme.Dark;
 
         private static readonly string SettingsPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),

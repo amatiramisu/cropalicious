@@ -13,7 +13,9 @@ namespace Cropalicious
         private OverlayWindow? overlayWindow;
         private TableLayoutPanel? presetsTable;
         private TableLayoutPanel? customTable;
+        private Panel? customScrollPanel;
         private Label? outputLabel;
+        private Label? hotkeyLabel;
         private ToolTip? toolTip;
         
         public event EventHandler<ScreenshotEventArgs>? ScreenshotTaken;
@@ -43,7 +45,7 @@ namespace Cropalicious
         {
             Text = "Cropalicious";
             Size = new Size(settings.WindowWidth, settings.WindowHeight);
-            MinimumSize = new Size(600, 520);
+            Icon = CropaliciousApp.CreateAppIcon(32);
             
             if (settings.WindowX >= 0 && settings.WindowY >= 0)
             {
@@ -71,12 +73,15 @@ namespace Cropalicious
             mainLayout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
             mainLayout.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
 
-            var titleLabel = new Label
+            var hintLabel = new Label
             {
-                Text = "Choose a capture size:",
-                Font = new Font("Segoe UI", 12, FontStyle.Bold),
+                Text = "Left click to capture, right click or ESC to cancel",
+                Font = new Font("Segoe UI", 9, FontStyle.Regular),
+                ForeColor = SystemColors.GrayText,
                 AutoSize = true,
-                Margin = new Padding(0, 0, 0, 20)
+                Anchor = AnchorStyles.None,
+                Margin = new Padding(0, 0, 0, 15),
+                TextAlign = ContentAlignment.MiddleCenter
             };
 
             presetsTable = new TableLayoutPanel
@@ -98,60 +103,80 @@ namespace Cropalicious
             {
                 ColumnCount = 3,
                 AutoSize = true,
-                Margin = new Padding(0, 0, 0, 20)
+                Margin = new Padding(0)
             };
 
             for (int i = 0; i < 3; i++)
                 customTable.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 33.33f));
 
+            customScrollPanel = new Panel
+            {
+                AutoScroll = true,
+                MaximumSize = new Size(0, 260),
+                AutoSize = true,
+                Margin = new Padding(0, 0, 0, 10),
+                Padding = new Padding(0, 0, 20, 0)
+            };
+            customScrollPanel.HorizontalScroll.Enabled = false;
+            customScrollPanel.HorizontalScroll.Visible = false;
+            customScrollPanel.Controls.Add(customTable);
+
             CreateCustomButtons();
 
             var bottomPanel = CreateBottomPanel();
 
-            mainLayout.Controls.Add(titleLabel, 0, 0);
+            mainLayout.Controls.Add(hintLabel, 0, 0);
             mainLayout.Controls.Add(presetsTable, 0, 1);
-            mainLayout.Controls.Add(customTable, 0, 2);
+            mainLayout.Controls.Add(customScrollPanel, 0, 2);
             mainLayout.Controls.Add(bottomPanel, 0, 3);
 
             Controls.Add(mainLayout);
+            ApplyTheme();
+
+            mainLayout.PerformLayout();
+            var preferredSize = mainLayout.PreferredSize;
+            MinimumSize = new Size(
+                preferredSize.Width + Padding.Horizontal + SystemInformation.FrameBorderSize.Width * 2 + 20,
+                preferredSize.Height + Padding.Vertical + SystemInformation.CaptionHeight + SystemInformation.FrameBorderSize.Height * 2 + 20
+            );
         }
 
         private void CreatePresetButtons()
         {
+            bool isDark = settings.Theme == AppTheme.Dark;
+
             for (int i = 0; i < presets.Length; i++)
             {
                 var preset = presets[i];
                 int col = i % 3;
                 int row = i / 3;
-                
-                var button = new Button
+
+                var button = new GlowButton
                 {
                     Text = preset.name,
                     Font = new Font("Segoe UI", 9, FontStyle.Bold),
-                    BackColor = Color.FromArgb(45, 125, 255),
+                    BackColor = Color.FromArgb(50, 180, 200),
                     ForeColor = Color.White,
-                    FlatStyle = FlatStyle.Flat,
                     Size = new Size(180, 80),
-                    Margin = new Padding(5),
+                    Margin = new Padding(0),
                     Tag = (preset.width, preset.height)
                 };
+                button.SetGlow(isDark);
 
-                button.FlatAppearance.BorderSize = 0;
                 button.Click += OnPresetButtonClick;
                 presetsTable!.Controls.Add(button, col, row);
             }
 
-            var addButton = new Button
+            var addButton = new GlowButton
             {
                 Text = "+\nAdd Custom",
-                Font = new Font("Segoe UI", 10, FontStyle.Bold),
-                BackColor = Color.FromArgb(34, 139, 34),
+                Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                BackColor = Color.FromArgb(160, 200, 50),
                 ForeColor = Color.White,
-                FlatStyle = FlatStyle.Flat,
-                Size = new Size(180, 60),
-                Margin = new Padding(5)
+                Size = new Size(180, 80),
+                Margin = new Padding(0)
             };
-            addButton.FlatAppearance.BorderSize = 0;
+            addButton.SetGlow(isDark);
             addButton.Click += OnAddCustomClick;
             presetsTable!.Controls.Add(addButton, 2, 1);
         }
@@ -168,6 +193,7 @@ namespace Cropalicious
             }
 
             customTable.Visible = true;
+            bool isDark = settings.Theme == AppTheme.Dark;
             int rows = (settings.CustomSizes.Count + 2) / 3;
             customTable.RowCount = rows;
 
@@ -181,43 +207,35 @@ namespace Cropalicious
                 int row = i / 3;
                 int index = i;
 
-                var container = new Panel
+                var button = new GlowButton
                 {
-                    Size = new Size(190, 90),
-                    Margin = new Padding(5)
-                };
-
-                var button = new Button
-                {
-                    Text = $"{custom.Name}\n{custom.Width}×{custom.Height}",
-                    Font = new Font("Segoe UI", 8, FontStyle.Bold),
-                    BackColor = Color.FromArgb(128, 128, 128),
+                    Text = $"{custom.Width}×{custom.Height}\n{custom.Name}",
+                    Font = new Font("Segoe UI", 9, FontStyle.Bold),
+                    BackColor = Color.FromArgb(200, 60, 120),
                     ForeColor = Color.White,
-                    FlatStyle = FlatStyle.Flat,
                     Size = new Size(180, 80),
-                    Location = new Point(0, 5),
+                    Margin = new Padding(0),
                     Tag = (custom.Width, custom.Height)
                 };
-                button.FlatAppearance.BorderSize = 0;
+                button.SetGlow(isDark);
                 button.Click += OnPresetButtonClick;
 
                 var deleteButton = new Button
                 {
                     Text = "×",
-                    Font = new Font("Segoe UI", 10, FontStyle.Bold),
+                    Font = new Font("Segoe UI", 9, FontStyle.Bold),
                     BackColor = Color.FromArgb(180, 50, 50),
                     ForeColor = Color.White,
                     FlatStyle = FlatStyle.Flat,
-                    Size = new Size(24, 24),
-                    Location = new Point(156, 0),
+                    Size = new Size(22, 22),
+                    Location = new Point(148, 0),
                     Tag = index
                 };
                 deleteButton.FlatAppearance.BorderSize = 0;
                 deleteButton.Click += OnDeleteCustomClick;
 
-                container.Controls.Add(deleteButton);
-                container.Controls.Add(button);
-                customTable.Controls.Add(container, col, row);
+                button.Controls.Add(deleteButton);
+                customTable.Controls.Add(button, col, row);
             }
         }
 
@@ -226,19 +244,21 @@ namespace Cropalicious
             if (sender is Button btn && btn.Tag is int index)
             {
                 var custom = settings.CustomSizes[index];
-                var result = MessageBox.Show(
-                    $"Delete '{custom.Name}'?",
-                    "Delete Preset",
-                    MessageBoxButtons.YesNo,
-                    MessageBoxIcon.Question);
+                var result = ConfirmDialog.Show($"Delete '{custom.Name}'?", "Delete Preset", settings.Theme, this);
 
                 if (result == DialogResult.Yes)
                 {
                     settings.CustomSizes.RemoveAt(index);
                     settings.Save();
                     CreateCustomButtons();
+                    AdjustWindowSize();
                 }
             }
+        }
+
+        private void AdjustWindowSize()
+        {
+            customScrollPanel!.Visible = settings.CustomSizes.Count > 0;
         }
 
         private Panel CreateBottomPanel()
@@ -253,89 +273,87 @@ namespace Cropalicious
             {
                 Dock = DockStyle.Fill,
                 ColumnCount = 1,
-                RowCount = 3,
+                RowCount = 6,
                 AutoSize = true
             };
 
-            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-            layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-
-            var outputPanel = new FlowLayoutPanel
-            {
-                FlowDirection = FlowDirection.LeftToRight,
-                AutoSize = true,
-                WrapContents = false,
-                Margin = new Padding(0, 0, 0, 10)
-            };
+            for (int i = 0; i < 6; i++)
+                layout.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
             outputLabel = new Label
             {
                 Text = $"Output: {TruncatePath(settings.OutputFolder, 50)}",
                 AutoSize = true,
-                Anchor = AnchorStyles.Left
+                Margin = new Padding(0, 0, 0, 3)
             };
 
             toolTip = new ToolTip();
             toolTip.SetToolTip(outputLabel, settings.OutputFolder);
 
-            var openFolderButton = new Button
+            var outputButtonsPanel = new TableLayoutPanel
             {
-                Text = "Open Folder",
+                ColumnCount = 2,
+                RowCount = 1,
                 AutoSize = true,
-                Margin = new Padding(10, 0, 0, 0)
+                Margin = new Padding(0, 0, 0, 10)
             };
+            outputButtonsPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+            outputButtonsPanel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+
+            var openFolderButton = CreateSmallButton("Open Folder");
+            openFolderButton.Margin = new Padding(0, 0, 5, 0);
             openFolderButton.Click += OnOpenFolderClick;
 
-            var changeFolderButton = new Button
-            {
-                Text = "Change Folder",
-                AutoSize = true,
-                Margin = new Padding(5, 0, 0, 0)
-            };
+            var changeFolderButton = CreateSmallButton("Change Folder");
+            changeFolderButton.Margin = new Padding(0);
             changeFolderButton.Click += OnChangeFolderClick;
 
-            outputPanel.Controls.AddRange(new Control[] { outputLabel, openFolderButton, changeFolderButton });
+            outputButtonsPanel.Controls.Add(openFolderButton, 0, 0);
+            outputButtonsPanel.Controls.Add(changeFolderButton, 1, 0);
 
-            var hotkeyPanel = new FlowLayoutPanel
+            hotkeyLabel = new Label
             {
-                FlowDirection = FlowDirection.LeftToRight,
+                Text = $"Hotkey: {GetHotkeyLabelText()}",
                 AutoSize = true,
-                WrapContents = false
+                Margin = new Padding(0, 0, 0, 3)
             };
 
-            var hotkeyLabel = new Label
-            {
-                Text = $"Global Hotkey: {GetHotkeyText()}",
-                AutoSize = true,
-                Anchor = AnchorStyles.Left
-            };
-
-            var changeHotkeyButton = new Button
-            {
-                Text = "Change Hotkey",
-                AutoSize = true,
-                Margin = new Padding(10, 0, 0, 0)
-            };
-            changeHotkeyButton.Click += OnChangeHotkeyClick;
-
-            hotkeyPanel.Controls.AddRange(new Control[] { hotkeyLabel, changeHotkeyButton });
+            var settingsButton = CreateSmallButton("Settings");
+            settingsButton.Margin = new Padding(0, 0, 0, 5);
+            settingsButton.Click += OnSettingsClick;
 
             var stayOnTopCheckbox = new CheckBox
             {
                 Text = "Stay on Top",
                 AutoSize = true,
-                Checked = settings.StayOnTop,
-                Margin = new Padding(0, 10, 0, 0)
+                Checked = settings.StayOnTop
             };
             stayOnTopCheckbox.CheckedChanged += OnStayOnTopChanged;
 
-            layout.Controls.Add(outputPanel, 0, 0);
-            layout.Controls.Add(hotkeyPanel, 0, 1);
-            layout.Controls.Add(stayOnTopCheckbox, 0, 2);
+            layout.Controls.Add(outputLabel, 0, 0);
+            layout.Controls.Add(outputButtonsPanel, 0, 1);
+            layout.Controls.Add(hotkeyLabel, 0, 2);
+            layout.Controls.Add(settingsButton, 0, 3);
+            layout.Controls.Add(stayOnTopCheckbox, 0, 4);
 
             panel.Controls.Add(layout);
             return panel;
+        }
+
+        private void ApplyTheme() => Theme.Apply(this, settings.Theme);
+
+        private void RebuildButtons()
+        {
+            presetsTable!.Controls.Clear();
+            CreatePresetButtons();
+            CreateCustomButtons();
+        }
+
+        private Button CreateSmallButton(string text)
+        {
+            var button = new Button { Text = text, Size = new Size(100, 25) };
+            Theme.StyleButton(button, settings.Theme);
+            return button;
         }
 
         private void OnStayOnTopChanged(object? sender, EventArgs e)
@@ -354,13 +372,14 @@ namespace Cropalicious
             {
                 settings.CaptureWidth = width;
                 settings.CaptureHeight = height;
+                UpdateHotkeyLabel();
                 StartCapture();
             }
         }
 
         private void OnAddCustomClick(object? sender, EventArgs e)
         {
-            using var dialog = new CustomSizeDialog();
+            using var dialog = new CustomSizeDialog(settings.CustomSizes.Count, settings.Theme);
             dialog.TopMost = TopMost;
             if (dialog.ShowDialog(this) == DialogResult.OK)
             {
@@ -374,6 +393,7 @@ namespace Cropalicious
                 settings.CustomSizes.Add(customSize);
                 settings.Save();
                 CreateCustomButtons();
+                AdjustWindowSize();
             }
         }
 
@@ -433,19 +453,61 @@ namespace Cropalicious
             }
         }
 
-        private void OnChangeHotkeyClick(object? sender, EventArgs e)
+        private void OnSettingsClick(object? sender, EventArgs e) => OpenSettings();
+
+        public event EventHandler? SettingsChanged;
+
+        public void OpenSettings()
         {
             using var settingsForm = new SettingsForm(settings);
-            if (settingsForm.ShowDialog() == DialogResult.OK)
+            settingsForm.TopMost = TopMost;
+            if (settingsForm.ShowDialog(this) == DialogResult.OK)
             {
                 settings.HotkeyKey = settingsForm.Settings.HotkeyKey;
                 settings.HotkeyModifiers = settingsForm.Settings.HotkeyModifiers;
+                settings.HotkeyMode = settingsForm.Settings.HotkeyMode;
+                settings.FixedCaptureWidth = settingsForm.Settings.FixedCaptureWidth;
+                settings.FixedCaptureHeight = settingsForm.Settings.FixedCaptureHeight;
+                settings.SnapMode = settingsForm.Settings.SnapMode;
+                settings.MinimizeToTray = settingsForm.Settings.MinimizeToTray;
+                settings.ContinuousCaptureMode = settingsForm.Settings.ContinuousCaptureMode;
+                settings.ShowNotifications = settingsForm.Settings.ShowNotifications;
+                settings.Theme = settingsForm.Settings.Theme;
                 settings.Save();
+                ApplyTheme();
+                RebuildButtons();
+                UpdateHotkeyLabel();
+                SettingsChanged?.Invoke(this, EventArgs.Empty);
+            }
+        }
+
+        private void UpdateHotkeyLabel()
+        {
+            if (hotkeyLabel == null) return;
+            hotkeyLabel.Text = $"Hotkey: {GetHotkeyLabelText()}";
+        }
+
+        private string GetHotkeyLabelText()
+        {
+            if (settings.HotkeyMode == HotkeyMode.FixedSize)
+            {
+                return $"{GetHotkeyText()} (fixed: {settings.FixedCaptureWidth}×{settings.FixedCaptureHeight})";
+            }
+            else
+            {
+                return $"{GetHotkeyText()} (last-used: {settings.CaptureWidth}×{settings.CaptureHeight})";
             }
         }
 
         private void OnFormClosing(object? sender, FormClosingEventArgs e)
         {
+            if (settings.MinimizeToTray && e.CloseReason == CloseReason.UserClosing)
+            {
+                e.Cancel = true;
+                Hide();
+                return;
+            }
+
             SaveWindowState();
             Application.Exit();
         }
@@ -482,9 +544,9 @@ namespace Cropalicious
         {
             var parts = new List<string>();
 
-            if ((settings.HotkeyModifiers & System.Windows.Forms.Keys.Control) != 0) parts.Add("Ctrl");
-            if ((settings.HotkeyModifiers & System.Windows.Forms.Keys.Alt) != 0) parts.Add("Alt");
-            if ((settings.HotkeyModifiers & System.Windows.Forms.Keys.Shift) != 0) parts.Add("Shift");
+            if ((settings.HotkeyModifiers & Keys.Control) != 0) parts.Add("Ctrl");
+            if ((settings.HotkeyModifiers & Keys.Alt) != 0) parts.Add("Alt");
+            if ((settings.HotkeyModifiers & Keys.Shift) != 0) parts.Add("Shift");
 
             parts.Add(settings.HotkeyKey.ToString());
 

@@ -13,10 +13,15 @@ namespace Cropalicious
         private NumericUpDown widthUpDown = null!;
         private NumericUpDown heightUpDown = null!;
         private TextBox nameTextBox = null!;
+        private readonly int existingCount;
+        private readonly AppTheme theme;
 
-        public CustomSizeDialog()
+        public CustomSizeDialog(int existingCount, AppTheme theme)
         {
+            this.existingCount = existingCount;
+            this.theme = theme;
             InitializeComponent();
+            Theme.Apply(this, theme);
         }
 
         private void InitializeComponent()
@@ -28,29 +33,16 @@ namespace Cropalicious
             MaximizeBox = false;
             MinimizeBox = false;
 
-            var nameLabel = new Label
-            {
-                Text = "Name:",
-                Location = new Point(20, 20),
-                Size = new Size(50, 20)
-            };
-
-            nameTextBox = new TextBox
-            {
-                Location = new Point(80, 18),
-                Size = new Size(230, 23)
-            };
-
             var widthLabel = new Label
             {
                 Text = "Width:",
-                Location = new Point(20, 55),
+                Location = new Point(20, 20),
                 Size = new Size(50, 20)
             };
 
             widthUpDown = new NumericUpDown
             {
-                Location = new Point(80, 53),
+                Location = new Point(80, 18),
                 Size = new Size(80, 23),
                 Minimum = 100,
                 Maximum = 4000,
@@ -60,17 +52,30 @@ namespace Cropalicious
             var heightLabel = new Label
             {
                 Text = "Height:",
-                Location = new Point(170, 55),
+                Location = new Point(170, 20),
                 Size = new Size(50, 20)
             };
 
             heightUpDown = new NumericUpDown
             {
-                Location = new Point(230, 53),
+                Location = new Point(230, 18),
                 Size = new Size(80, 23),
                 Minimum = 100,
                 Maximum = 4000,
                 Value = 1024
+            };
+
+            var nameLabel = new Label
+            {
+                Text = "Name:",
+                Location = new Point(20, 55),
+                Size = new Size(50, 20)
+            };
+
+            nameTextBox = new TextBox
+            {
+                Location = new Point(80, 53),
+                Size = new Size(230, 23)
             };
 
             var okButton = new Button
@@ -90,26 +95,21 @@ namespace Cropalicious
             };
 
             Controls.AddRange(new Control[] {
-                nameLabel, nameTextBox,
                 widthLabel, widthUpDown,
                 heightLabel, heightUpDown,
+                nameLabel, nameTextBox,
                 okButton, cancelButton
             });
         }
 
         private void OnOK(object? sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(nameTextBox.Text))
-            {
-                MessageBox.Show("Please enter a name for the custom size.", "Error", 
-                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            CustomName = nameTextBox.Text.Trim();
+            CustomName = string.IsNullOrWhiteSpace(nameTextBox.Text)
+                ? $"Custom{existingCount + 1:D2}"
+                : nameTextBox.Text.Trim();
             CustomWidth = (int)widthUpDown.Value;
             CustomHeight = (int)heightUpDown.Value;
-            
+
             DialogResult = DialogResult.OK;
             Close();
         }

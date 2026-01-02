@@ -2,7 +2,6 @@ using System;
 using System.ComponentModel;
 using System.Drawing;
 using System.Windows.Forms;
-using System.Threading.Tasks;
 using Microsoft.Win32;
 
 namespace Cropalicious
@@ -36,10 +35,24 @@ namespace Cropalicious
             trayIcon = new NotifyIcon()
             {
                 Text = "Cropalicious",
-                Icon = CreateDefaultIcon(),
+                Icon = CreateAppIcon(),
                 ContextMenuStrip = trayMenu,
                 Visible = true
             };
+            trayIcon.MouseClick += (s, e) => { if (e.Button == MouseButtons.Left) ShowMainWindow(); };
+            trayIcon.BalloonTipClicked += OnBalloonTipClicked;
+        }
+
+        private void OnBalloonTipClicked(object? sender, EventArgs e)
+        {
+            try
+            {
+                if (System.IO.Directory.Exists(settings.OutputFolder))
+                {
+                    System.Diagnostics.Process.Start("explorer.exe", settings.OutputFolder);
+                }
+            }
+            catch { }
         }
 
         private void InitializeHotkey()
@@ -60,6 +73,11 @@ namespace Cropalicious
         {
             if (overlayWindow == null || overlayWindow.IsDisposed)
             {
+                if (settings.HotkeyMode == HotkeyMode.FixedSize)
+                {
+                    settings.CaptureWidth = settings.FixedCaptureWidth;
+                    settings.CaptureHeight = settings.FixedCaptureHeight;
+                }
                 overlayWindow = new OverlayWindow(settings);
                 overlayWindow.ScreenshotTaken += OnScreenshotTaken;
                 overlayWindow.Show();
@@ -70,9 +88,11 @@ namespace Cropalicious
         {
             try
             {
-                // Capture immediately for maximum responsiveness
                 ScreenCapture.SaveScreenshot(e.CaptureArea, settings.OutputFolder);
-                trayIcon?.ShowBalloonTip(2000, "Cropalicious", "Screenshot saved!", ToolTipIcon.Info);
+                if (settings.ShowNotifications)
+                {
+                    trayIcon?.ShowBalloonTip(2000, "Cropalicious", "Screenshot saved!", ToolTipIcon.Info);
+                }
             }
             catch (Exception ex)
             {
@@ -93,6 +113,7 @@ namespace Cropalicious
                 mainWindow = new MainWindow(settings);
                 mainWindow.ScreenshotTaken += OnScreenshotTaken;
                 mainWindow.FormClosed += OnMainWindowClosed;
+                mainWindow.SettingsChanged += OnSettingsChanged;
             }
 
             mainWindow.Show();
@@ -106,20 +127,20 @@ namespace Cropalicious
             {
                 window.ScreenshotTaken -= OnScreenshotTaken;
                 window.FormClosed -= OnMainWindowClosed;
+                window.SettingsChanged -= OnSettingsChanged;
             }
+        }
+
+        private void OnSettingsChanged(object? sender, EventArgs e)
+        {
+            hotkey?.Dispose();
+            InitializeHotkey();
         }
 
         private void OnSettings(object? sender, EventArgs e)
         {
-            using var settingsForm = new SettingsForm(settings);
-            if (settingsForm.ShowDialog() == DialogResult.OK)
-            {
-                settings = settingsForm.Settings;
-                settings.Save();
-                
-                hotkey?.Dispose();
-                InitializeHotkey();
-            }
+            ShowMainWindow();
+            mainWindow?.OpenSettings();
         }
 
         private void InitializeDisplayChangeHandling()
@@ -140,13 +161,26 @@ namespace Cropalicious
             Application.Exit();
         }
 
-        private Icon CreateDefaultIcon()
+        public static Icon CreateAppIcon(int size = 16)
         {
-            var bitmap = new Bitmap(16, 16);
+            var bitmap = new Bitmap(size, size);
             using (var g = Graphics.FromImage(bitmap))
             {
-                g.Clear(Color.Blue);
-                g.DrawRectangle(Pens.White, 2, 2, 11, 11);
+                g.Clear(Color.Black);
+                float scale = size / 16f;
+                float lineWidth = Math.Max(1, 2 * scale);
+                float cornerLen = 5 * scale;
+                using var greenPen = new Pen(Color.Lime, lineWidth);
+                float m = lineWidth / 2;
+                float e = size - m - 1;
+                g.DrawLine(greenPen, m, m, m + cornerLen, m);
+                g.DrawLine(greenPen, m, m, m, m + cornerLen);
+                g.DrawLine(greenPen, e, m, e - cornerLen, m);
+                g.DrawLine(greenPen, e, m, e, m + cornerLen);
+                g.DrawLine(greenPen, m, e, m + cornerLen, e);
+                g.DrawLine(greenPen, m, e, m, e - cornerLen);
+                g.DrawLine(greenPen, e, e, e - cornerLen, e);
+                g.DrawLine(greenPen, e, e, e, e - cornerLen);
             }
             return Icon.FromHandle(bitmap.GetHicon());
         }

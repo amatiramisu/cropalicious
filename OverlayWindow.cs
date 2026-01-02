@@ -257,14 +257,33 @@ namespace Cropalicious
             var halfWidth = settings.CaptureWidth / 2;
             var halfHeight = settings.CaptureHeight / 2;
 
-            var screen = Screen.FromPoint(mousePos);
-            var screenBounds = screen.Bounds;
-            var clientScreenBounds = RectangleToClient(screenBounds);
+            int x, y;
 
-            var x = Math.Max(clientScreenBounds.Left + halfWidth,
-                    Math.Min(clientMousePos.X, clientScreenBounds.Right - halfWidth)) - halfWidth;
-            var y = Math.Max(clientScreenBounds.Top + halfHeight,
-                    Math.Min(clientMousePos.Y, clientScreenBounds.Bottom - halfHeight)) - halfHeight;
+            if (settings.SnapMode == SnapMode.None)
+            {
+                x = clientMousePos.X - halfWidth;
+                y = clientMousePos.Y - halfHeight;
+            }
+            else
+            {
+                Rectangle snapBounds;
+                if (settings.SnapMode == SnapMode.VirtualScreen)
+                {
+                    snapBounds = SystemInformation.VirtualScreen;
+                }
+                else
+                {
+                    var screen = Screen.FromPoint(mousePos);
+                    snapBounds = screen.Bounds;
+                }
+
+                var clientSnapBounds = RectangleToClient(snapBounds);
+
+                x = Math.Max(clientSnapBounds.Left + halfWidth,
+                        Math.Min(clientMousePos.X, clientSnapBounds.Right - halfWidth)) - halfWidth;
+                y = Math.Max(clientSnapBounds.Top + halfHeight,
+                        Math.Min(clientMousePos.Y, clientSnapBounds.Bottom - halfHeight)) - halfHeight;
+            }
 
             var width = settings.CaptureWidth;
             var height = settings.CaptureHeight;
@@ -308,7 +327,7 @@ namespace Cropalicious
             // Bottom-right corner
             cornerVisuals[6].Offset = new Vector3(x + width - CornerLength, y + height - CornerThickness, 0);
             cornerVisuals[6].Size = new Vector2(CornerLength, CornerThickness);
-            cornerVisuals[7].Offset = new Vector3(x + width - CornerLength, y + height - CornerLength, 0);
+            cornerVisuals[7].Offset = new Vector3(x + width - CornerThickness, y + height - CornerLength, 0);
             cornerVisuals[7].Size = new Vector2(CornerThickness, CornerLength);
         }
 
@@ -364,12 +383,20 @@ namespace Cropalicious
             var mousePos = MousePosition;
             var captureRect = CalculateCaptureRect(mousePos);
 
-            // Hide overlay and flush DWM so it's guaranteed not to appear in the capture
             Hide();
             try { DwmFlush(); } catch { }
 
             ScreenshotTaken?.Invoke(this, new ScreenshotEventArgs(captureRect));
-            Close();
+
+            if (settings.ContinuousCaptureMode)
+            {
+                Show();
+                UpdateOverlayDisplay();
+            }
+            else
+            {
+                Close();
+            }
         }
 
         private Rectangle CalculateCaptureRect(Point mousePos)
@@ -377,13 +404,31 @@ namespace Cropalicious
             var halfWidth = settings.CaptureWidth / 2;
             var halfHeight = settings.CaptureHeight / 2;
 
-            var screen = Screen.FromPoint(mousePos);
-            var screenBounds = screen.Bounds;
+            int x, y;
 
-            var x = Math.Max(screenBounds.Left + halfWidth,
-                    Math.Min(mousePos.X, screenBounds.Right - halfWidth)) - halfWidth;
-            var y = Math.Max(screenBounds.Top + halfHeight,
-                    Math.Min(mousePos.Y, screenBounds.Bottom - halfHeight)) - halfHeight;
+            if (settings.SnapMode == SnapMode.None)
+            {
+                x = mousePos.X - halfWidth;
+                y = mousePos.Y - halfHeight;
+            }
+            else
+            {
+                Rectangle snapBounds;
+                if (settings.SnapMode == SnapMode.VirtualScreen)
+                {
+                    snapBounds = SystemInformation.VirtualScreen;
+                }
+                else
+                {
+                    var screen = Screen.FromPoint(mousePos);
+                    snapBounds = screen.Bounds;
+                }
+
+                x = Math.Max(snapBounds.Left + halfWidth,
+                        Math.Min(mousePos.X, snapBounds.Right - halfWidth)) - halfWidth;
+                y = Math.Max(snapBounds.Top + halfHeight,
+                        Math.Min(mousePos.Y, snapBounds.Bottom - halfHeight)) - halfHeight;
+            }
 
             return new Rectangle(x, y, settings.CaptureWidth, settings.CaptureHeight);
         }
