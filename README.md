@@ -1,6 +1,6 @@
 # Cropalicious
 
-Screenshot tool for capturing exact dimensions. Live preview rectangle, snap to screen edges, single click capture.
+Screenshot tool for capturing exact dimensions.
 
 
 <img width="579" height="488" alt="crop" src="https://github.com/user-attachments/assets/8e87ca32-b862-49d3-85c7-68baeed38d97" />
@@ -12,13 +12,13 @@ Screenshot tool for capturing exact dimensions. Live preview rectangle, snap to 
 - Custom size presets
 - Global hotkey (Ctrl+Shift+C default)
 - Multi-monitor support with snap modes
-- System tray integration
+- Live preview rectangle.
 
 ## Download
 
 Grab the latest from [Releases](../../releases). Extract and run - no installation needed.
 
-Requires .NET 9.0 Desktop Runtime (Windows will prompt if missing).
+Requires .NET 9.0 Desktop Runtime (Windows should prompt to download, if missing).
 
 ## Building
 
